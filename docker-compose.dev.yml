@@ -1,26 +1,11 @@
 version: '3.7'
 
-networks:
-  request-hub-network:
-    driver: bridge
-    name: request-hub-bridge-network
-
 volumes:
-  pg-data:
-    name: request-hub-pg-data-vol
+  pg-data-dev:
+    name: request-hub-pg-data-dev-vol
 
 services:
   db:
-    image: postgres:10-alpine
-    restart: always
-    container_name: request-hub-db
-    networks:
-      - request-hub-network
-    ports:
-      - '5432:5432'
+    container_name: request-hub-db-dev
     volumes:
-      - pg-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - pg-data-dev:/var/lib/postgresql/data
