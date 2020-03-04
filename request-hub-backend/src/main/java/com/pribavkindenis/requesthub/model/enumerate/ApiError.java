@@ -15,7 +15,8 @@ public enum ApiError {
     FORBIDDEN("Forbidden"),
     BAD_REQUEST("Bad request"),
     INVALID_JSON("Invalid json syntax"),
-    UNPROCESSABLE_JSON("Unprocessable json object");
+    UNPROCESSABLE_JSON("Unprocessable json object"),
+    ENTITY_NOT_FOUND("Entity not found");
 
     private static final Map<String, ApiError> BY_NAME;
 

@@ -1,6 +1,7 @@
 package com.pribavkindenis.requesthub.integration.advice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.pribavkindenis.requesthub.exception.RequestNotBelongToUserException;
 import com.pribavkindenis.requesthub.model.dto.ApiErrorResponse;
 import com.pribavkindenis.requesthub.model.enumerate.ApiError;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.persistence.EntityNotFoundException;
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +41,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ApiError.FORBIDDEN, e.getMessage());
     }
 
+    @ExceptionHandler
+    protected ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException e) {
+        return buildResponse(HttpStatus.NOT_FOUND, ApiError.ENTITY_NOT_FOUND, e.getMessage());
+    }
+
+    @ExceptionHandler(RequestNotBelongToUserException.class)
+    protected ResponseEntity<Object> handleRequestNotBelongToUser(RequestNotBelongToUserException e) {
+        return buildResponse(HttpStatus.FORBIDDEN, ApiError.FORBIDDEN, e.getMessage());
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e,
                                                                   HttpHeaders headers,
@@ -46,6 +58,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                                                                   WebRequest request) {
         var errorMessage = buildValidationErrorMessage(e.getBindingResult().getAllErrors());
         return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ApiError.UNPROCESSABLE_JSON, errorMessage);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatus status,
+                                                                  WebRequest request) {
+        ResponseEntity<Object> responseEntity;
+        if (e.getCause() instanceof JsonProcessingException) {
+            responseEntity = buildResponse(HttpStatus.BAD_REQUEST, ApiError.INVALID_JSON, "Error while processing JSON object");
+        } else {
+            responseEntity = buildResponse(HttpStatus.BAD_REQUEST, ApiError.BAD_REQUEST, e.getMessage());
+        }
+        return responseEntity;
     }
 
     private String buildValidationErrorMessage(List<ObjectError> errors) {
@@ -61,20 +87,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         } else {
             return String.format("Object '%s' %s", e.getObjectName(), e.getDefaultMessage());
         }
-    }
-
-    @Override
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException e,
-                                                                  HttpHeaders headers,
-                                                                  HttpStatus status,
-                                                                  WebRequest request) {
-        ResponseEntity<Object> responseEntity;
-        if (e.getCause() instanceof JsonProcessingException) {
-            responseEntity = buildResponse(HttpStatus.BAD_REQUEST, ApiError.INVALID_JSON, "Error while processing JSON object");
-        } else {
-            responseEntity = buildResponse(HttpStatus.BAD_REQUEST, ApiError.BAD_REQUEST, e.getMessage());
-        }
-        return responseEntity;
     }
 
     private ResponseEntity<Object> buildResponse(HttpStatus status, ApiError error, String description) {

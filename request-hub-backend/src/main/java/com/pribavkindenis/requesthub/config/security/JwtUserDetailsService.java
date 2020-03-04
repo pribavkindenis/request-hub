@@ -2,9 +2,9 @@ package com.pribavkindenis.requesthub.config.security;
 
 import com.pribavkindenis.requesthub.model.jpa.Privilege;
 import com.pribavkindenis.requesthub.model.jpa.Role;
+import com.pribavkindenis.requesthub.model.security.UserInfo;
 import com.pribavkindenis.requesthub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -28,15 +28,12 @@ public class JwtUserDetailsService implements UserDetailsService {
                               .flatMap(List::stream)
                               .map(Privilege::getPrivilege)
                               .collect(Collectors.toSet());
-        return User.builder()
-                   .username(user.getUsername())
-                   .password(user.getPassword())
-                   .authorities(authorities)
-                   .accountExpired(false)
-                   .accountLocked(false)
-                   .credentialsExpired(false)
-                   .disabled(false)
-                   .build();
+        return UserInfo.builder()
+                       .userId(user.getId())
+                       .username(user.getUsername())
+                       .password(user.getPassword())
+                       .authorities(authorities)
+                       .build();
     }
 
 }
