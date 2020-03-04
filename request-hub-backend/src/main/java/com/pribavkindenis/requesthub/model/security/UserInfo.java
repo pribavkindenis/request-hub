@@ -1,5 +1,6 @@
 package com.pribavkindenis.requesthub.model.security;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
+@Hidden
 @Builder
 @Data
 public class UserInfo implements UserDetails {

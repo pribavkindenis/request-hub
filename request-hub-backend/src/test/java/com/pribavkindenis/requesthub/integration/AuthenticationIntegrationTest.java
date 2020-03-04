@@ -2,9 +2,10 @@ package com.pribavkindenis.requesthub.integration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pribavkindenis.requesthub.config.security.JwtTokenService;
 import com.pribavkindenis.requesthub.integration.advice.GlobalExceptionHandler;
 import com.pribavkindenis.requesthub.model.dto.ApiErrorResponse;
-import com.pribavkindenis.requesthub.model.dto.Authentication;
+import com.pribavkindenis.requesthub.model.dto.AuthenticationDto;
 import com.pribavkindenis.requesthub.model.enumerate.ApiError;
 import com.pribavkindenis.requesthub.model.enumerate.Authority;
 import com.pribavkindenis.requesthub.model.jpa.Privilege;
@@ -81,10 +82,11 @@ public class AuthenticationIntegrationTest {
                 .content(content))
                         .andReturn();
         var response = result.getResponse();
+        var tokenCookie = response.getCookie(JwtTokenService.TOKEN_COOKIE);
 
         // then
         Assert.assertEquals(HttpStatus.OK.value(), response.getStatus());
-        Assert.assertTrue(response.getContentAsString().startsWith("Bearer "));
+        Assert.assertNotNull(tokenCookie);
     }
 
     @Transactional
@@ -202,11 +204,11 @@ public class AuthenticationIntegrationTest {
                    .build();
     }
 
-    private Authentication buildAuthenticationDto(String username, String password) {
-        return Authentication.builder()
-                             .username(username)
-                             .password(password)
-                             .build();
+    private AuthenticationDto buildAuthenticationDto(String username, String password) {
+        return AuthenticationDto.builder()
+                                .username(username)
+                                .password(password)
+                                .build();
     }
 
 }

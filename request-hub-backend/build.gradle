@@ -37,6 +37,8 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-impl:0.10.5'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.10.5'
 	implementation 'org.apache.commons:commons-lang3:3.9'
+	implementation 'org.springdoc:springdoc-openapi-ui:1.2.33'
+	implementation 'org.springdoc:springdoc-openapi-security:1.2.33'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'com.h2database:h2:1.4.194'

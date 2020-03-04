@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 public class JwtTokenService {
 
-    private static final String TOKEN_PREFIX = "Bearer ";
+    public static final String TOKEN_COOKIE = "token";
     private static final String AUTHORITIES_CLAIM = "auth";
     private static final String USER_ID_CLAIM = "uid";
 
@@ -43,6 +44,10 @@ public class JwtTokenService {
 
     @Value("${jwt.token.expire-millis}")
     private Long expireMillis;
+
+    public int getCookieExpireSeconds() {
+        return (int) (expireMillis / 1000);
+    }
 
     public String buildToken(UserInfo userInfo) {
         var userId = userInfo.getUserId();
@@ -59,16 +64,16 @@ public class JwtTokenService {
 
     private String buildTokenInternal(Long userId, String username, List<String> authoritiesNames) {
         var sign = Keys.hmacShaKeyFor(jwtSecret.getBytes());
-        return TOKEN_PREFIX + Jwts.builder()
-                                  .signWith(sign, SignatureAlgorithm.HS512)
-                                  .setHeaderParam("typ", "JWT")
-                                  .setIssuer(tokenIssuer)
-                                  .setAudience(TokenAudience)
-                                  .setSubject(username)
-                                  .setExpiration(getExpiration())
-                                  .claim(AUTHORITIES_CLAIM, authoritiesNames)
-                                  .claim(USER_ID_CLAIM, userId)
-                                  .compact();
+        return Jwts.builder()
+                   .signWith(sign, SignatureAlgorithm.HS512)
+                   .setHeaderParam("typ", "JWT")
+                   .setIssuer(tokenIssuer)
+                   .setAudience(TokenAudience)
+                   .setSubject(username)
+                   .setExpiration(getExpiration())
+                   .claim(AUTHORITIES_CLAIM, authoritiesNames)
+                   .claim(USER_ID_CLAIM, userId)
+                   .compact();
     }
 
     private Date getExpiration() {
@@ -77,7 +82,7 @@ public class JwtTokenService {
 
     public Authentication parseToken(String token) {
         Authentication authentication = null;
-        if (isTokenValid(token)) {
+        if (StringUtils.isNotBlank(token)) {
             var parsedToken = parseTokenInternal(token);
             var userId = parsedToken.getBody().get(USER_ID_CLAIM, Long.class);
             var username = parsedToken.getBody().getSubject();
@@ -88,14 +93,10 @@ public class JwtTokenService {
         return authentication;
     }
 
-    private boolean isTokenValid(String token) {
-        return StringUtils.isNotBlank(token) && token.startsWith(TOKEN_PREFIX);
-    }
-
     private Jws<Claims> parseTokenInternal(String token) {
         return Jwts.parser()
                    .setSigningKey(jwtSecret.getBytes())
-                   .parseClaimsJws(token.replace(TOKEN_PREFIX, ""));
+                   .parseClaimsJws(token);
     }
 
     private Set<? extends GrantedAuthority> retrieveAuthorities(Jws<Claims> token) {
