@@ -1,0 +1,37 @@
+version: '3.7'
+
+volumes:
+  pg-data-prod:
+    name: request-hub-pg-data-prod-vol
+
+services:
+  db:
+    container_name: request-hub-db-prod
+    volumes:
+      - pg-data-prod:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./request-hub-backend
+      dockerfile: Dockerfile
+    restart: always
+    working_dir: /app
+    container_name: request-hub-backend-prod
+    depends_on:
+      - db
+    networks:
+      - request-hub-network
+    ports:
+      - '8080:8080'
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_HOST: request-hub-db-prod
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      PBKDF2_SECRET: ${PBKDF2_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      TOKEN_ISSUER: request-hub-backend
+      TOKEN_AUDIENCE: request-hub-frontend
+    command: >
+      bash -c './wait-for-it.sh request-hub-db-prod:5432 && java -jar request-hub-backend-0.1.jar'
